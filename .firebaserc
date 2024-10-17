@@ -1,0 +1,7 @@
+{
+  "projects": {
+    "gsutil cors set cors.json gs://chatx-84a00.appspot.com": "chatx-84a00"
+  },
+  "targets": {},
+  "etags": {}
+}
