@@ -1,21 +1,23 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_cloud_firestore/firebase_cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 
 import 'chatpage.dart';
+
 
 class ChatCard extends StatefulWidget {
   final String username;
   final String userId;
   final bool defaultPic;
+  final String? imageUrl; // Accept imageUrl
 
   const ChatCard({
     super.key,
     required this.username,
     required this.userId,
     required this.defaultPic,
+    this.imageUrl, // Accept imageUrl
   });
 
   @override
@@ -31,10 +33,12 @@ class ChatCardState extends State<ChatCard> {
   @override
   void initState() {
     super.initState();
-    if (!widget.defaultPic) {
-      _fetchImageUrl();
+    // Set loading to false if the default picture is true or if we have an imageUrl
+    if (widget.defaultPic || widget.imageUrl != null) {
+      _loading = false; // No need to load if we already have a URL or default image
+      _imageUrl = widget.imageUrl; // Set imageUrl directly if it's provided
     } else {
-      _loading = false; // No need to load if it's a default picture
+      _fetchImageUrl(); // Fetch image if not using default
     }
 
     // Fetch the last message preview
@@ -42,19 +46,10 @@ class ChatCardState extends State<ChatCard> {
   }
 
   Future<void> _fetchImageUrl() async {
-    try {
-      final ref = FirebaseStorage.instance.ref().child('users/${widget.userId}/zed.jpg');
-      final url = await ref.getDownloadURL();
-      setState(() {
-        _imageUrl = url;
-        _loading = false;
-      });
-    } catch (_) {
-      setState(() {
-        _imageUrl = null; // Set to null in case of an error
-        _loading = false; // Stop loading even if there was an error
-      });
-    }
+    setState(() {
+      _imageUrl = widget.imageUrl;
+      _loading = false; // Stop loading
+    });
   }
 
   Future<void> _fetchLastMessage() async {
@@ -109,7 +104,7 @@ class ChatCardState extends State<ChatCard> {
               ? Image.asset('assets/defprofile.jpg') // Default asset image
               : _imageUrl != null
               ? CachedNetworkImage(
-            imageUrl: _imageUrl!,
+            imageUrl: _imageUrl!, // Use the fetched or passed imageUrl
             imageBuilder: (context, imageProvider) => CircleAvatar(
               radius: 25,
               backgroundImage: imageProvider,
@@ -154,6 +149,7 @@ class ChatCardState extends State<ChatCard> {
     return "${date.hour}:${date.minute.toString().padLeft(2, '0')}";
   }
 }
+
 
 
 bool isValidEmail(String email) {
